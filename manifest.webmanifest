@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "WORD CHAIN β2.2",
+  "short_name": "WORD CHAIN β2.2",
+  "description": "Score to unlock words, build your vocabulary, and collect cosmetic themes.",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#171638",
+  "theme_color": "#171638",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}
