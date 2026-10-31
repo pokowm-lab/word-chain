@@ -1,4 +1,4 @@
-const CACHE = 'word-chain-beta1-shell-v1';
+const CACHE = 'word-chain-beta1-shell-v2';
 const SHELL = ['./', './index.html', './game-logic.js', './manifest.webmanifest', './icon.svg', './apple-touch-icon.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
