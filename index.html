@@ -17,7 +17,7 @@
     body.fevery{background:radial-gradient(ellipse at 50% 35%,#a33e83 0,#482759 48%,#17142d 100%);animation:feverbg 1.4s ease-in-out infinite alternate}
     @keyframes feverbg{to{filter:hue-rotate(22deg) brightness(1.16)}}
     button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}button:focus-visible{outline:3px solid white;outline-offset:3px}
-    .app{width:min(100%,620px);height:100vh;height:100dvh;margin:auto;padding:calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 8px);display:flex;flex-direction:column;align-items:center;gap:clamp(5px,1.1dvh,11px);overflow:hidden}
+    .app{position:relative;z-index:1;width:min(100%,620px);height:100vh;height:100dvh;margin:auto;padding:calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 8px);display:flex;flex-direction:column;align-items:center;gap:clamp(5px,1.1dvh,11px);overflow:hidden}
     .top{width:100%;display:flex;justify-content:space-between;align-items:center;min-height:39px}.brand{font-size:clamp(21px,6vw,30px);font-weight:1000;letter-spacing:1px;text-shadow:0 3px 12px #0008}.brand span{color:var(--gold)}.top-actions{display:flex;gap:7px}.icon-btn{border-radius:12px;background:#ffffff18;padding:8px 11px;font-size:18px}
     .tagline{color:#e4e5ff;font-size:12px;opacity:.83;margin-top:-7px}
     .stats{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stat{background:var(--panel);border:1px solid #ffffff15;border-radius:14px;text-align:center;padding:5px 3px 7px;min-width:0}.stat b{display:block;font-size:clamp(19px,5.7vw,28px);line-height:1.15;font-variant-numeric:tabular-nums}.stat small{font-size:9px;color:var(--muted);letter-spacing:.8px;font-weight:800}
@@ -37,9 +37,15 @@
     body.fevery .fever .meter-fill{background:linear-gradient(90deg,#f2c96d,#e7a76d);box-shadow:0 0 7px #e7c07855}
     .fever-title.hot{color:#ffe6ac;text-shadow:none}
     .fever-flash{display:none}
+    .fever-celebration{position:fixed;z-index:0;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .45s ease;background:radial-gradient(ellipse at 8% 78%,#e7b87518 0,transparent 38%),radial-gradient(ellipse at 92% 25%,#b994dc18 0,transparent 40%)}
+    body.fevery .fever-celebration{opacity:1}
+    .fever-particle{position:absolute;bottom:-24px;left:var(--x);width:var(--size);height:var(--size);border:1px solid #fff8;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff9,var(--color) 55%,#ffffff05 100%);box-shadow:0 0 12px color-mix(in srgb,var(--color) 45%,transparent);opacity:0;animation:feverRise var(--duration) ease-out forwards}
+    @keyframes feverRise{12%{opacity:.42}75%{opacity:.28}to{transform:translate3d(var(--drift),-55vh,0) scale(.55);opacity:0}}
+    @media(prefers-reduced-motion:reduce){.fever-celebration{transition:none}.fever-particle{display:none}}
   </style>
 </head>
 <body>
+  <div class="fever-celebration" id="feverCelebration" aria-hidden="true"></div>
   <main class="app" id="app">
     <header class="top"><div class="brand">🐾 WORD <span>CHAIN</span></div><div class="top-actions"><button class="icon-btn" id="soundToggle" aria-label="効果音を切り替え">🔊</button><button class="icon-btn" id="voiceTest" aria-label="英語音声をテスト">🗣️</button><button class="icon-btn" id="helpBtn" aria-label="遊び方">?</button></div></header>
     <div class="tagline">つなげて、消して、英語がひびく！</div>
@@ -67,7 +73,7 @@
     const ACHIEVEMENTS=[['firstPlay','初プレイ','はじめて遊ぶ'],['chain8','8 CHAIN!','1回で8個以上消す'],['firstFever','初フィーバー','フィーバーを発動する'],['score5000','SCORE 5,000','1プレイで5,000点を獲得'],['plays10','10 PLAYS','累計10回プレイする'],['total50000','50,000 POINTS','累計50,000点を獲得']];
     const KEY='word-chain-save';const N=6;const BASE=WORDS.slice(0,6).map(w=>w.id);
     const $=id=>document.getElementById(id);const board=$('board'),overlay=$('overlay');
-    let data=loadData(),cells=[],path=[],active=false,playing=false,busy=false,soundOn=true,score=0,bestChain=0,remaining=60,feverProgress=0,feverUntil=0,gameEnds=0,tickHandle=null,pauseStartedAt=null,audioCtx=null,voices=[];
+    let data=loadData(),cells=[],path=[],active=false,playing=false,busy=false,soundOn=true,score=0,bestChain=0,remaining=60,feverProgress=0,feverUntil=0,gameEnds=0,tickHandle=null,pauseStartedAt=null,audioCtx=null,voices=[],feverParticleTimer=null;
     function freshData(){return{version:1,highScore:0,totalScore:0,plays:0,totalCleared:0,achievements:[],unlocked:BASE.slice(),deck:BASE.slice()}}
     function loadData(){let d;try{d=JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){d=null}const base=freshData();if(!d||typeof d!=='object'||Array.isArray(d))return base;
       const num=(v,min=0)=>Number.isFinite(v)&&v>=min?Math.floor(v):0;
@@ -105,7 +111,8 @@
     function toast(message,type=''){const t=document.createElement('div');t.className='toast '+type;t.textContent=message;$('toasts').append(t);setTimeout(()=>t.remove(),3900)}
     function award(id){if(data.achievements.includes(id))return;data.achievements.push(id);const a=ACHIEVEMENTS.find(x=>x[0]===id);if(a)toast('🏅 実績解除：'+a[1],'achievement');save()}
     function unlockWords(){for(const w of WORDS){if(w.unlock&&data.totalScore>=w.unlock&&!data.unlocked.includes(w.id)){data.unlocked.push(w.id);toast('✨ 新しいことばを解放：'+w.emoji+' '+w.name,'unlock')}}}
-    function updateFeverUI(){const fever=feverUntil>Date.now();$('feverTitle').classList.toggle('hot',fever);$('feverTitle').textContent=fever?'🔥 FEVER!':'✨ FEVER CHARGE';$('feverCount').textContent=fever?((Math.max(0,feverUntil-Date.now())/1000).toFixed(1)+' 秒'):feverProgress+' / 30';$('feverFill').style.width=fever?Math.max(0,Math.min(100,(feverUntil-Date.now())/10000*100))+'%':(feverProgress/30*100)+'%';document.body.classList.toggle('fevery',fever)}
+    function spawnFeverParticles(count=4){const layer=$('feverCelebration');const colors=['#ffd982','#f7a7ce','#a9e6ed','#c6b1f2'];for(let i=0;i<count;i++){const p=document.createElement('i');p.className='fever-particle';const side=Math.random()<.5;const x=side?3+Math.random()*18:79+Math.random()*18;p.style.setProperty('--x',x+'vw');p.style.setProperty('--size',(9+Math.random()*13)+'px');p.style.setProperty('--color',colors[Math.floor(Math.random()*colors.length)]);p.style.setProperty('--duration',(2.5+Math.random()*1.1)+'s');p.style.setProperty('--drift',(-18+Math.random()*36)+'px');p.style.animationDelay=(Math.random()*.25)+'s';layer.append(p);setTimeout(()=>p.remove(),4200)}}
+    function updateFeverUI(){const fever=feverUntil>Date.now();$('feverTitle').classList.toggle('hot',fever);$('feverTitle').textContent=fever?'🔥 FEVER!':'✨ FEVER CHARGE';$('feverCount').textContent=fever?((Math.max(0,feverUntil-Date.now())/1000).toFixed(1)+' 秒'):feverProgress+' / 30';$('feverFill').style.width=fever?Math.max(0,Math.min(100,(feverUntil-Date.now())/10000*100))+'%':(feverProgress/30*100)+'%';document.body.classList.toggle('fevery',fever);if(fever&&!feverParticleTimer){spawnFeverParticles(10);feverParticleTimer=setInterval(()=>spawnFeverParticles(3),850)}else if(!fever&&feverParticleTimer){clearInterval(feverParticleTimer);feverParticleTimer=null}}
     function activateFever(){feverProgress=0;feverUntil=Date.now()+10000;award('firstFever');updateFeverUI();toast('🔥 FEVER TIME! 10秒間スコア2倍','unlock')}
     function showFloat(amount){const f=document.createElement('div');f.className='float-score';f.textContent='+'+fmt(amount);document.querySelector('.board-wrap').append(f);setTimeout(()=>f.remove(),900)}
     function scoreUpdate(n){$('score').textContent=fmt(n);if(score>data.highScore){data.highScore=score;$('best').textContent=fmt(score)}}
