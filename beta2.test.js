@@ -86,3 +86,12 @@ test('survival encounter set can include locked words without changing classic u
   assert.ok(encounterIds.includes(locked.id));
   assert.ok(!['dog','cat','cow','apple','banana','car'].includes(locked.id));
 });
+
+test('saved record restores an interrupted run and safely ignores corrupt survival storage',()=>{
+  const run=S.createRun(words,()=>.2);run.stage=3;run.stageTarget=S.targetForStage(3);run.runScore=5100;run.stageScore=800;run.upgrades.time=2;
+  const record={bestStage:3,bestRunScore:5100,plays:4,encountered:['dog','ubiquitous','bad-id'],bestCleared:2,run};
+  const loaded=S.loadRecord(JSON.stringify(record),words);
+  assert.equal(loaded.run.stage,3);assert.equal(loaded.run.stageTarget,3400);assert.equal(loaded.run.stageScore,undefined);assert.equal(loaded.run.runScore,5100);
+  assert.deepEqual(loaded.encountered,['dog','ubiquitous']);assert.equal(loaded.plays,4);
+  assert.deepEqual(S.loadRecord('{invalid',words),{bestStage:0,bestRunScore:0,plays:0,encountered:[],bestCleared:0,run:null});
+});

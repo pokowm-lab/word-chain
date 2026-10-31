@@ -85,7 +85,7 @@
       if(base.deck.length>6)base.deck=base.deck.slice(0,6);return base;
     }
     function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(_){toast('保存できませんでした。端末の空き容量を確認してください','') }refreshStats()}
-    function loadSurvivalRecord(){try{const r=JSON.parse(localStorage.getItem(SURVIVAL_KEY)||'{}');return{bestStage:Number.isFinite(r.bestStage)?r.bestStage:0,bestRunScore:Number.isFinite(r.bestRunScore)?r.bestRunScore:0,plays:Number.isFinite(r.plays)?r.plays:0,encountered:Array.isArray(r.encountered)?r.encountered.filter(id=>BY_ID[id]):[],bestCleared:Number.isFinite(r.bestCleared)?r.bestCleared:0,run:null}}catch(_){return{bestStage:0,bestRunScore:0,plays:0,encountered:[],bestCleared:0,run:null}}}
+    function loadSurvivalRecord(){try{return Survival.loadRecord(localStorage.getItem(SURVIVAL_KEY),WORDS)}catch(_){return Survival.loadRecord(null,WORDS)}}
     function saveSurvival(){try{localStorage.setItem(SURVIVAL_KEY,JSON.stringify(survivalRecord))}catch(_){toast('サバイバル記録を保存できませんでした')}}
     function currentDeck(){return mode==='survival'&&run?run.deck:data.deck}
     function refreshStats(){ $('best').textContent=mode==='survival'&&run?fmt(survivalRecord.bestRunScore):data.highScore.toLocaleString();$('wordCount').textContent=data.unlocked.length+'/100'; }
