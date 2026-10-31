@@ -26,6 +26,8 @@ test('rarity rate settings sum to 100 percent and the master has exact tier coun
   const counts=words.reduce((m,w)=>(m[w.rarity]=(m[w.rarity]||0)+1,m),{});
   assert.deepEqual(counts,{Common:65,Rare:25,Epic:9,Legendary:1});
   assert.ok(words.every(w=>C.RARITIES.includes(w.rarity)));
+  const difficultyCounts=words.reduce((m,w)=>{m[w.difficulty]??={Common:0,Rare:0,Epic:0,Legendary:0};m[w.difficulty][w.rarity]++;return m},{});
+  assert.deepEqual(difficultyCounts,{basic:{Common:49,Rare:19,Epic:7,Legendary:0},advanced:{Common:16,Rare:6,Epic:2,Legendary:1}});
 });
 
 test('gacha gives a first-time word permanent ownership, normal access, and 20 XP',()=>{
