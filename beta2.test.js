@@ -7,7 +7,11 @@ test('master contains 100 complete unique words with valid categories and icons'
   assert.equal(words.length,100);assert.equal(new Set(words.map(w=>w.id)).size,100);assert.equal(new Set(words.map(w=>w.word)).size,100);
   assert.ok(words.every(w=>w.id&&w.word&&w.meaning&&w.icon&&w.category&&['basic','advanced'].includes(w.difficulty)&&Number.isFinite(w.unlockScore)));
   assert.equal(new Set(words.map(w=>w.icon)).size,100);assert.equal(words.filter(w=>w.difficulty==='basic').length,75);assert.equal(words.filter(w=>w.difficulty==='advanced').length,25);
-  assert.equal(byId.lion.unlockScore,2000);assert.equal(byId.dragon.unlockScore,50000);
+  assert.deepEqual(['dog','cat','cow','apple','banana','car'].map(id=>byId[id].unlockScore),[0,0,0,0,0,0]);
+  assert.equal(words.filter(w=>w.unlockScore>0).length,94);assert.equal(Math.max(...words.map(w=>w.unlockScore)),500000);
+  assert.equal(new Set(words.filter(w=>w.unlockScore>0).map(w=>w.unlockScore)).size,94);
+  assert.ok(words.filter(w=>w.unlockScore>0).every(w=>w.unlockScore<=500000));
+  const early=words.filter(w=>w.unlockScore>0).sort((a,b)=>a.unlockScore-b.unlockScore).slice(0,12);assert.ok(early.filter(w=>w.difficulty==='advanced').length<=3);assert.ok(new Set(early.slice(0,7).map(w=>w.category)).size>=6);
 });
 
 test('survival starting deck has six basic words, at least three categories and no category above three',()=>{

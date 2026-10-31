@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "WORD CHAIN β2",
-  "short_name": "WORD CHAIN β2",
-  "description": "Connect matching pictures, clear the board, and hear English words.",
+  "name": "WORD CHAIN β2.2",
+  "short_name": "WORD CHAIN β2.2",
+  "description": "Score to unlock words, build your vocabulary, and collect cosmetic themes.",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
