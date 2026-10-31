@@ -30,6 +30,13 @@
     @media(max-height:680px){.app{gap:4px;padding-top:calc(env(safe-area-inset-top) + 4px);padding-bottom:calc(env(safe-area-inset-bottom) + 4px)}.tagline{display:none}.stat{padding:3px 2px 5px}.fever{padding:4px 8px}.word-card{height:48px;min-height:44px}.board{border-radius:15px}.instructions{font-size:10px}.control{padding:7px 4px}.bottom{display:none}}
     @media(max-height:570px){:root{--board-size:min(64vw,calc(100dvh - 205px),470px)}.app{flex-direction:row;flex-wrap:wrap;align-content:center;justify-content:center;gap:6px 10px;padding-left:8px;padding-right:8px}.top{width:100%;height:30px;min-height:30px}.stats{width:calc(100% - var(--board-size) - 12px);grid-template-columns:1fr}.stat{display:flex;align-items:center;justify-content:space-between;padding:3px 8px}.stat b{font-size:18px}.fever{width:calc(100% - var(--board-size) - 12px)}.word-card{width:calc(100% - var(--board-size) - 12px)}.board-wrap{order:3}.stats{order:2}.fever{order:4}.word-card{order:5}.instructions{order:6;width:100%}.controls{order:7;width:100%}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+    /* Fever stays colorful but avoids hue cycling, flashing, and recoloring emoji. */
+    body.fevery{background:radial-gradient(ellipse at 50% 35%,#4a426d 0,#292747 48%,#17172f 100%);animation:none}
+    body.fevery .board{border:2px solid #d8b86d;box-shadow:0 0 18px #d8b86d33,0 15px 32px #07091d70,inset 0 1px 0 #ffffff24}
+    body.fevery .fever{border-color:#d8b86d;background:#28223d}
+    body.fevery .fever .meter-fill{background:linear-gradient(90deg,#f2c96d,#e7a76d);box-shadow:0 0 7px #e7c07855}
+    .fever-title.hot{color:#ffe6ac;text-shadow:none}
+    .fever-flash{display:none}
   </style>
 </head>
 <body>
@@ -99,7 +106,7 @@
     function award(id){if(data.achievements.includes(id))return;data.achievements.push(id);const a=ACHIEVEMENTS.find(x=>x[0]===id);if(a)toast('🏅 実績解除：'+a[1],'achievement');save()}
     function unlockWords(){for(const w of WORDS){if(w.unlock&&data.totalScore>=w.unlock&&!data.unlocked.includes(w.id)){data.unlocked.push(w.id);toast('✨ 新しいことばを解放：'+w.emoji+' '+w.name,'unlock')}}}
     function updateFeverUI(){const fever=feverUntil>Date.now();$('feverTitle').classList.toggle('hot',fever);$('feverTitle').textContent=fever?'🔥 FEVER!':'✨ FEVER CHARGE';$('feverCount').textContent=fever?((Math.max(0,feverUntil-Date.now())/1000).toFixed(1)+' 秒'):feverProgress+' / 30';$('feverFill').style.width=fever?Math.max(0,Math.min(100,(feverUntil-Date.now())/10000*100))+'%':(feverProgress/30*100)+'%';document.body.classList.toggle('fevery',fever)}
-    function activateFever(){feverProgress=0;feverUntil=Date.now()+10000;award('firstFever');updateFeverUI();const f=document.createElement('div');f.className='fever-flash';document.body.append(f);setTimeout(()=>f.remove(),600);toast('🔥 FEVER TIME! 10秒間スコア2倍','unlock')}
+    function activateFever(){feverProgress=0;feverUntil=Date.now()+10000;award('firstFever');updateFeverUI();toast('🔥 FEVER TIME! 10秒間スコア2倍','unlock')}
     function showFloat(amount){const f=document.createElement('div');f.className='float-score';f.textContent='+'+fmt(amount);document.querySelector('.board-wrap').append(f);setTimeout(()=>f.remove(),900)}
     function scoreUpdate(n){$('score').textContent=fmt(n);if(score>data.highScore){data.highScore=score;$('best').textContent=fmt(score)}}
     function finish(){if(!active)return;active=false;const selected=path.slice();path=[];if(selected.length<3){render();return}busy=true;const type=cells[selected[0]],len=selected.length,word=wordById(data.deck[type]),mult=scoreMultiplier(len),isFever=feverUntil>Date.now(),points=WordChainLogic.score(len,isFever);bestChain=Math.max(bestChain,len);score+=points;data.totalScore+=points;data.totalCleared+=len;scoreUpdate();$('word').textContent=word.name;$('hint').textContent=len+' CHAIN × '+mult+(isFever?' × FEVER':'');$('combo').textContent=len>=10?'AMAZING!':len>=7?'GREAT!':len>=5?'NICE!':len+' CHAIN';$('combo').classList.toggle('show',len>=5);showFloat(points);if(len>=8)award('chain8');if(score>=5000)award('score5000');unlockWords();const feverWas=isFever;let feverStarted=false;if(!feverWas){feverProgress+=len;if(feverProgress>=30){activateFever();feverStarted=true}}save();
